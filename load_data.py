@@ -15,7 +15,7 @@ def glob_loader(globs):
 
 def load_data():
     images, labels = glob_loader(['images/background_*.jpg', 'images/shark_*.jpg'])
-    images_small = [cv2.resize(image, (32, 32)) for image in images]
+    images_small = [cv2.resize(image, (64, 64)) for image in images]
     X = np.stack(images_small).astype(np.float32)
     Y = np.array(labels)
     return (X, Y), (X, Y)
