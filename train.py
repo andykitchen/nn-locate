@@ -28,23 +28,27 @@ img_prep.add_featurewise_stdnorm()
 # Real-time data augmentation
 img_aug = ImageAugmentation()
 img_aug.add_random_flip_leftright()
-img_aug.add_random_rotation(max_angle=25.)
+img_aug.add_random_rotation(max_angle=90.)
+img_aug.add_random_crop((64, 64), padding=6)
 
 network = input_data(shape=[None, 64, 64, 3],
                      data_preprocessing=img_prep,
                      data_augmentation=img_aug)
+network = conv_2d(network, 16, 3, activation='relu')
+network = max_pool_2d(network, 2)
 network = conv_2d(network, 32, 3, activation='relu')
 network = max_pool_2d(network, 2)
-network = conv_2d(network, 64, 3, activation='relu')
-network = conv_2d(network, 64, 3, activation='relu')
-network = max_pool_2d(network, 2)
-network = fully_connected(network, 512, activation='relu')
+network = fully_connected(network, 128, activation='relu')
 network = dropout(network, 0.5)
 network = fully_connected(network, num_classes, activation='softmax')
 network = regression(network, optimizer='adam',
                      loss='categorical_crossentropy',
-                     learning_rate=0.001)
+                     learning_rate=0.0001)
 
 model = tflearn.DNN(network, tensorboard_verbose=0)
-model.fit(X, Y, n_epoch=50, shuffle=True, validation_set=(X_test, Y_test),
-          show_metric=True, batch_size=96, run_id='detloc_cnn')
+
+if __name__ == '__main__':
+	model.fit(X, Y, n_epoch=6, shuffle=True, validation_set=(X_test, Y_test),
+	          show_metric=True, batch_size=5, run_id='detect_cnn')
+
+	model.save('detect_cnn.tflearn')
