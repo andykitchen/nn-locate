@@ -3,6 +3,12 @@
 # For GStreamer input, use OpenCV 3.0 ...
 #   workon cv
 #   python video_grab_images.py [image_pathname_prefix]
+#
+# Usage
+# ~~~~~
+# Click with mouse on center-point for 64x64 image capture
+# Press 's' to save complete frame to image_pathname_full.jpg
+# Press 'q' to quit
 
 import cv2
 import numpy as np
@@ -20,7 +26,7 @@ image_pathname = image_pathname + '_'
 video_input = 0  # local camera
 
 # gst-launch-1.0 udpsrc port=5000 ! application/x-rtp ! rtph264depay ! avdec_h264 ! videoconvert ! osxvideosink
-# video_input = 'udpsrc port=5000 ! application/x-rtp ! rtph264depay ! avdec_h264 ! videoconvert ! appsink'
+video_input = 'udpsrc port=5004 ! application/x-rtp ! rtph264depay ! avdec_h264 ! videoconvert ! appsink'
 
 video_frame_rate = 1  # milliseconds
 
@@ -71,8 +77,11 @@ while (capture.isOpened()):
 
     cv2.imshow('Video', frame_output)
 
-  if cv2.waitKey(video_frame_rate) & 0xff == ord('q'):
+  key = cv2.waitKey(video_frame_rate) & 0xff
+  if key == ord('q'):
     break
+  if key == ord('s'):
+    cv2.imwrite(image_pathname + 'full.jpg', frame);
 
 capture.release()
 cv2.destroyAllWindows()
