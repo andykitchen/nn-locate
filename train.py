@@ -12,6 +12,7 @@ from tflearn.data_preprocessing import ImagePreprocessing
 from tflearn.data_augmentation import ImageAugmentation
 
 num_classes = 2
+image_size = (64, 64)
 
 import load_data
 (X, Y), (X_test, Y_test) = load_data.load_data()
@@ -28,27 +29,34 @@ img_prep.add_featurewise_stdnorm()
 # Real-time data augmentation
 img_aug = ImageAugmentation()
 img_aug.add_random_flip_leftright()
-img_aug.add_random_rotation(max_angle=90.)
-img_aug.add_random_crop((64, 64), padding=6)
+img_aug.add_random_rotation(max_angle=180.)
+img_aug.add_random_crop(image_size, padding=6)
 
-network = input_data(shape=[None, 64, 64, 3],
+def build_network(image_size, batch_size=None, n_channels=3):
+    network = input_data(shape=[batch_size, image_size[0], image_size[1], n_channels],
                      data_preprocessing=img_prep,
                      data_augmentation=img_aug)
-network = conv_2d(network, 16, 3, activation='relu')
-network = max_pool_2d(network, 2)
-network = conv_2d(network, 32, 3, activation='relu')
-network = max_pool_2d(network, 2)
-network = fully_connected(network, 128, activation='relu')
-network = dropout(network, 0.5)
-network = fully_connected(network, num_classes, activation='softmax')
-network = regression(network, optimizer='adam',
-                     loss='categorical_crossentropy',
-                     learning_rate=0.0001)
+    network = conv_2d(network, 16, 3, activation='relu')
+    network = max_pool_2d(network, 2)
+    network = conv_2d(network, 32, 3, activation='relu')
+    network = max_pool_2d(network, 2)
+    network = fully_connected(network, num_classes, activation='softmax')
+    network = regression(network, optimizer='adam',
+                         loss='categorical_crossentropy',
+                         learning_rate=0.0001)
 
-model = tflearn.DNN(network, tensorboard_verbose=0)
+    return network
+
+def build_model():
+    network = build_network(image_size=image_size)
+    model = tflearn.DNN(network, tensorboard_verbose=0)
+
+    return model
 
 if __name__ == '__main__':
-	model.fit(X, Y, n_epoch=6, shuffle=True, validation_set=(X_test, Y_test),
-	          show_metric=True, batch_size=5, run_id='detect_cnn')
+    model = build_model()
 
-	model.save('detect_cnn.tflearn')
+    model.fit(X, Y, n_epoch=2, shuffle=True, validation_set=(X_test, Y_test),
+              show_metric=True, batch_size=1, run_id='detect_cnn')
+
+    model.save('detect_cnn.tflearn')
